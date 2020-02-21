@@ -34,13 +34,14 @@ class State<T> {
   }
 }
 
-// Project State Management
+// Project State Management/ singleton
 class ProjectState extends State<Project> {
   // private listeners: Listener[] = [];
   // array of object class
   private projects: Project[] = [];
   private static instance: ProjectState;
 
+  // calling State => addListener
   private constructor() {
     super();
   }
@@ -86,6 +87,7 @@ class ProjectState extends State<Project> {
 
   private updateListeners() {
     for (const callFunction of this.listeners) {
+      // each time we call function and passing all projects
       callFunction(this.projects.slice());
     }
   }
@@ -155,6 +157,7 @@ function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
 abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement;
   hostElement: T;
+  // content of templateElement which is form or li or section
   element: U;
   constructor(
     templateID: string,
@@ -171,11 +174,13 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
       this.templateElement.content,
       true,
     );
+    // dynamic element
     this.element = importedNode.firstElementChild as U;
     if (newElementId) {
       this.element.id = newElementId;
     }
 
+    // this is already called inside all drived
     this.attach(insertAtStart);
   }
   private attach(posation: boolean) {
@@ -195,8 +200,11 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>
   implements Draggable {
   private project: Project;
 
+  // projectItem
   constructor(hostId: string, project: Project) {
+    // component
     super('single-project', hostId, false, project.id);
+
     this.project = project;
     this.configure();
     this.renderContent();
@@ -241,6 +249,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement>
 
   constructor(private type: 'active' | 'finished') {
     super('project-list', 'app', false, `${type}-projects`);
+    // initial value
     this.assignedProjects = [];
 
     this.configure();
@@ -275,7 +284,8 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement>
     this.element.addEventListener('dragover', this.dragOverHandler);
     this.element.addEventListener('dragleave', this.dragLeaveHandler);
     this.element.addEventListener('drop', this.dropHandler);
-
+    // you can log this here
+    // in the nex line we have "project: Project[]" means => copy: this.projects.slice()
     projectState.addListener((project: Project[]) => {
       const relaventProject = project.filter(pro => {
         if (this.type === 'active') {
@@ -303,7 +313,9 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement>
       `${this.type}-projects-list`,
     )! as HTMLUListElement;
     list.innerHTML = '';
+    // loop throw all items
     for (const item of this.assignedProjects) {
+      // element here is the content of "project-list"
       new ProjectItem(this.element.querySelector('ul')!.id, item);
     }
   }
@@ -331,10 +343,12 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
     this.configure();
   }
 
+  // inherited from Component
   configure() {
     this.element.addEventListener('submit', this.submitHandler);
   }
 
+  // inherited from Component
   renderContent() {}
 
   private gatherUserInput(): [string, string, number] | void {
@@ -379,9 +393,13 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   @autobind
   private submitHandler(event: Event) {
     event.preventDefault();
+    // return filtered inputs
     const userInput = this.gatherUserInput();
+    // check if there is array
     if (Array.isArray(userInput)) {
+      // destructuring
       const [title, desc, people] = userInput;
+      // use global class to pass our result to lists
       projectState.addProject(title, desc, people);
       this.clearInputs();
     }
